@@ -5,7 +5,8 @@ PRODUCT_COPY_FILES += \
     frameworks/native/data/etc/android.hardware.ethernet.xml:vendor/etc/permissions/android.hardware.ethernet.xml \
     frameworks/native/data/etc/android.software.activities_on_secondary_displays.xml:vendor/etc/permissions/android.software.activities_on_secondary_displays.xml \
     $(INTEL_PATH_COMMON)/framework/android.software.cant_save_state.xml:vendor/etc/permissions/android.software.cant_save_state.xml \
-    frameworks/native/data/etc/android.hardware.keystore.app_attest_key.xml:vendor/etc/permissions/android.hardware.keystore.app_attest_key.xml
+    frameworks/native/data/etc/android.hardware.keystore.app_attest_key.xml:vendor/etc/permissions/android.hardware.keystore.app_attest_key.xml \
+    frameworks/native/data/etc/android.software.ipsec_tunnel_migration.xml:vendor/etc/permissions/android.software.ipsec_tunnel_migration.xml
 
 # Make sure vendor car product overlays take precedence than google definition
 # under packages/services/Car/car_product/overlay/
@@ -29,8 +30,18 @@ PRODUCT_PACKAGES += android.hardware.automotive.vehicle.intel@2.0-service
 PRODUCT_PACKAGES += android.hardware.automotive.audiocontrol@1.0-service.intel
 
 {{#aosp_hal}}
-PRODUCT_PACKAGES += android.hardware.automotive.vehicle@V1-default-service \
-    android.hardware.automotive.vehicle@V1-default-impl
+# Vehicle HAL
+ENABLE_VHAL_FAKE_GRPC_SERVER ?= true
+PRODUCT_PACKAGES += android.hardware.automotive.vehicle@default-trout-service
+ifeq ($(ENABLE_VHAL_FAKE_GRPC_SERVER),true)
+PRODUCT_PACKAGES += android.hardware.automotive.vehicle@default-trout-fake-hardware-grpc-server
+PRODUCT_PROPERTY_OVERRIDES += ro.vendor.vehiclehal.server.use_local_fake_server=true
+PRODUCT_PROPERTY_OVERRIDES += \
+	ro.vendor.vehiclehal.server.cid=19 \
+	ro.vendor.vehiclehal.server.port=9210
+
+BOARD_SEPOLICY_DIRS += device/google/trout/sepolicy/vendor/google/vehicle
+endif
 {{/aosp_hal}}
 
 VEHICLE_HAL_PROTO_TYPE := {{vhal-proto-type}}
